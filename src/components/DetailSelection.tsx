@@ -125,8 +125,7 @@ function format(content: string, category: string): string {
   return content
     .replaceAll('$name', globalConfig?.repositoryName || 'Wizard')
     .replaceAll('$protocol', `${window.location.protocol}//`)
-    .replaceAll('$host', window.location.host)
-    .replaceAll('$port', (port.length == 0 || port === "80" || port === "443") ? "/" : `:${port}/`)
+    .replaceAll('$host', `${window.location.host}/`)
     .replaceAll('$id', category)
 }
 
@@ -134,28 +133,28 @@ function RenderMaven(category: string): string {
   return format(`<repository>
   <id>$id</id>
   <name>$name</name>
-  <url>$protocol$host$port$id</url>
+  <url>$protocol$host$id</url>
 </repository>`, category)
 }
 
 function RenderGradleGroovy(category: string): string {
   return format(`maven {
-    url "$protocol$host$port$id"
+    url "$protocol$host$id"
 }`, category)
 }
 
 function RenderGradleKotlin(category: string): string {
   return format(`maven {
-    url = uri("$protocol$host$port$id")
+    url = uri("$protocol$host$id")
 }`, category)
 }
 
 function RenderSBT(category: string): string {
   return format(`resolvers +=
   "$id" 
-     at "$protocol$host$port$id"`, category)
+     at "$protocol$host$id"`, category)
 }
 
 function RenderLeiningen(category: string): string {
-  return format(`:repositories [["$id" "$protocol$host$port$id"]]`, category)
+  return format(`:repositories [["$id" "$protocol$host$id"]]`, category)
 }
