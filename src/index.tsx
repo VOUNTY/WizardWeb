@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import ReactDOM, { Root } from 'react-dom/client';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import useMetaTags from 'react-metatags-hook';
 
 import './assets/index.scss';
 import './addons/TranslationAddon';
@@ -10,8 +12,6 @@ import { NotificationsProvider } from '@mantine/notifications';
 import { ColorScheme, ColorSchemeProvider, MantineProvider, MantineTheme } from '@mantine/core';
 
 import HomeDefaultView from './views/HomeDefaultView';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import useMetaTags from 'react-metatags-hook';
 import RestClient from './api/RestClient';
 import WebsiteConfig from './api/models/WebsiteConfig';
 

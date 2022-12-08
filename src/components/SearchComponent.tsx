@@ -22,7 +22,7 @@ function Render(props: { value: string, change: Function }): JSX.Element {
   const { classes } = useStyles()
 
   return <Container size={"md"}>
-    <Paper p={"xl"} shadow={"lg"} radius={"lg"}>
+    <Paper p={"lg"} shadow={"lg"} radius={"lg"}>
       <Group spacing={5}>
         <FiSearch size={17} />
         <Title className={classes.title} color={"w_primary"}>{ t('search.title') }</Title>

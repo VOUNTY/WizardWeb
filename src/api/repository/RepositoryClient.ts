@@ -11,9 +11,16 @@ export class RepositoryClient extends RestClient {
     return data
   }
 
-  async getContent(repository: string): Promise<RepositoryContent> {
-    const { data: data } = await axios.get(`/s/${repository}/${window.location.pathname}`, this.config())
+  async getContent(repository: string, path: string []): Promise<RepositoryContent> {
+    const { data: data } = await axios.get(`/s/${repository}/${this.formatPath(path)}`, this.config())
     return data
+  }
+
+  formatPath(paths: string []): string {
+    let result = ""
+    for (const path of paths)
+      result += `${path}/`
+    return result
   }
 
 }

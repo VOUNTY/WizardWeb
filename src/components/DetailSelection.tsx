@@ -5,6 +5,7 @@ import { Prism } from '@mantine/prism';
 import { useLocalStorage } from '@mantine/hooks';
 import { FiCode } from 'react-icons/fi';
 import { globalConfig } from '../index';
+import RepositoryContent from '../api/models/RepositoryContent';
 
 const useStyles = createStyles(() => {
   return {
@@ -26,7 +27,7 @@ interface Tab {
   language: string
 }
 
-function Render(): JSX.Element {
+function Render(props: { repositoryContent: RepositoryContent | undefined }): JSX.Element {
   const { t } = useTranslation()
   const { classes } = useStyles()
 
@@ -44,7 +45,7 @@ function Render(): JSX.Element {
     { name: 'Leiningen', tabKey: 'leiningen', language: 'ocaml' },
   ])
 
-  return <Paper p={"xl"} shadow={"lg"} radius={"lg"}>
+  return <Paper p={"lg"} shadow={"lg"} radius={"lg"}>
     <Group spacing={5}>
       <FiCode size={17} />
       <Title className={classes.title} color={"w_primary"}>{ t('detail.title') }</Title>
@@ -62,7 +63,7 @@ function Render(): JSX.Element {
       {
         tabs.map((value: Tab, index: number) => {
           return <Tabs.Panel key={index} value={value.tabKey} pt={"md"}>
-            <RenderTab name={value.name} tabKey={value.tabKey} language={value.language} />
+            <RenderTab repositoryContent={props.repositoryContent} name={value.name} tabKey={value.tabKey} language={value.language} />
           </Tabs.Panel>
         })
       }
@@ -70,15 +71,19 @@ function Render(): JSX.Element {
   </Paper>
 }
 
-export default class DetailSelection extends Component<any, any> {
+interface Detail {
+  repositoryContent: RepositoryContent | undefined
+}
+
+export default class DetailSelection extends Component<Detail, any> {
 
   render(): ReactNode {
-    return <Render />
+    return <Render repositoryContent={this.props.repositoryContent} />
   }
 
 }
 
-function RenderTab(tab: Tab): JSX.Element {
+function RenderTab(props: { repositoryContent: RepositoryContent | undefined, name: string, tabKey: string, language: string }): JSX.Element {
   const { t } = useTranslation()
 
   const [category] = useLocalStorage<string>({
@@ -86,25 +91,25 @@ function RenderTab(tab: Tab): JSX.Element {
   })
 
   let code: string = ``
-  switch (tab.tabKey) {
+  switch (props.tabKey) {
     case 'maven': {
-      code = RenderMaven(category || '{unknown}')
+      code = RenderMaven(props.repositoryContent, category || '{unknown}')
       break
     }
     case 'gradle_groovy': {
-      code = RenderGradleGroovy(category || '{unknown}')
+      code = RenderGradleGroovy(props.repositoryContent, category || '{unknown}')
       break
     }
     case 'gradle_kotlin': {
-      code = RenderGradleKotlin(category || '{unknown}')
+      code = RenderGradleKotlin(props.repositoryContent, category || '{unknown}')
       break
     }
     case 'sbt': {
-      code = RenderSBT(category || '{unknown}')
+      code = RenderSBT(props.repositoryContent, category || '{unknown}')
       break
     }
     case 'leiningen': {
-      code = RenderLeiningen(category || '{unknown}')
+      code = RenderLeiningen(props.repositoryContent, category || '{unknown}')
       break
     }
   }
@@ -112,7 +117,7 @@ function RenderTab(tab: Tab): JSX.Element {
   return <div className={"allowSelection"}>
     <Prism
       withLineNumbers
-      language={tab.language as any}
+      language={props.language as any}
       copyLabel={t('detail.clipboard.copy') ?? ''}
       copiedLabel={t('detail.clipboard.copied') ?? ''}>
       { code }
@@ -120,41 +125,68 @@ function RenderTab(tab: Tab): JSX.Element {
   </div>
 }
 
-function format(content: string, category: string): string {
-  const port: string = window.location.port
+function format(repositoryContent: RepositoryContent | undefined, content: string, category: string): string {
   return content
     .replaceAll('$name', globalConfig?.repositoryName || 'Wizard')
     .replaceAll('$protocol', `${window.location.protocol}//`)
     .replaceAll('$host', `${window.location.host}/`)
     .replaceAll('$id', category)
+    .replaceAll('$groupId', repositoryContent?.dependency?.dependency.groupId || 'unknown')
+    .replaceAll('$artifactId', repositoryContent?.dependency?.dependency.artifactId || 'unknown')
+    .replaceAll('$version', repositoryContent?.dependency?.dependency.version || 'unknown')
 }
 
-function RenderMaven(category: string): string {
-  return format(`<repository>
+function RenderMaven(repositoryContent: RepositoryContent | undefined, category: string): string {
+  const repository: string = `<repository>
   <id>$id</id>
   <name>$name</name>
   <url>$protocol$host$id</url>
-</repository>`, category)
+</repository>`
+
+  const dependency: string = `<dependency>
+  <groupId>$groupId</groupId>
+  <artifactId>$artifactId</artifactId>
+  <version>$version</version>
+</dependency>`
+
+  const content: string = repositoryContent?.dependency ? dependency : repository
+  return format(repositoryContent, content, category)
 }
 
-function RenderGradleGroovy(category: string): string {
-  return format(`maven {
+function RenderGradleGroovy(repositoryContent: RepositoryContent | undefined, category: string): string {
+  const repository: string = `maven {
     url "$protocol$host$id"
-}`, category)
+}`
+  const dependency: string = `implementation "$groupId:$artifactId:$version"`
+
+  const content: string = repositoryContent?.dependency ? dependency : repository
+  return format(repositoryContent, content, category)
 }
 
-function RenderGradleKotlin(category: string): string {
-  return format(`maven {
+function RenderGradleKotlin(repositoryContent: RepositoryContent | undefined, category: string): string {
+  const repository: string = `maven {
     url = uri("$protocol$host$id")
-}`, category)
+}`
+  const dependency: string = `implementation("$groupId:$artifactId:$version")`
+
+  const content: string = repositoryContent?.dependency ? dependency : repository
+  return format(repositoryContent, content, category)
 }
 
-function RenderSBT(category: string): string {
-  return format(`resolvers +=
+function RenderSBT(repositoryContent: RepositoryContent | undefined, category: string): string {
+  const repository: string = `resolvers +=
   "$id" 
-     at "$protocol$host$id"`, category)
+     at "$protocol$host$id"`
+  const dependency: string = `libraryDependencies += "$groupId" % "$artifactId" % "$version"`
+
+  const content: string = repositoryContent?.dependency ? dependency : repository
+  return format(repositoryContent, content, category)
 }
 
-function RenderLeiningen(category: string): string {
-  return format(`:repositories [["$id" "$protocol$host$id"]]`, category)
+function RenderLeiningen(repositoryContent: RepositoryContent | undefined, category: string): string {
+  const repository: string = `:repositories [["$id" "$protocol$host$id"]]`
+  const dependency: string = `[$groupId/$artifactId "$version"]`
+
+  const content: string = repositoryContent?.dependency ? dependency : repository
+  return format(repositoryContent, content, category)
 }

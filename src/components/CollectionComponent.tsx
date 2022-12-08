@@ -1,7 +1,7 @@
-import { Component, ReactNode, useEffect, useState } from 'react';
+import { Component, ReactNode } from 'react';
 import {
   Badge,
-  Box,
+  Box, Breadcrumbs,
   createStyles,
   Divider,
   Group,
@@ -9,10 +9,11 @@ import {
   Paper,
   ScrollArea,
   Select,
-  Space,
+  Space, Stack,
   Text,
   ThemeIcon,
   Title,
+  Anchor,
 } from '@mantine/core';
 import { AiOutlineSortAscending, AiOutlineSortDescending } from 'react-icons/ai';
 import { useTranslation } from 'react-i18next';
@@ -20,8 +21,7 @@ import { MdStorage } from 'react-icons/md';
 import { useLocalStorage } from '@mantine/hooks';
 
 import RepositoryList from '../api/models/RepositoryList';
-import { Content } from '../api/models/RepositoryContent';
-import RepositoryClient from '../api/repository/RepositoryClient';
+import RepositoryContent, { Content } from '../api/models/RepositoryContent';
 import { FiDownload, FiEye, FiFile, FiFolder } from 'react-icons/all';
 import { useNavigate } from 'react-router-dom';
 
@@ -61,38 +61,21 @@ const useStyles = createStyles((theme: MantineTheme) => {
   }
 })
 
-function Render(props: { types: RepositoryList [], search: string }): JSX.Element {
+function Render(props: { repositoryContent: RepositoryContent | undefined, types: RepositoryList [], search: string, path: string [], changePath: Function }): JSX.Element {
   const { classes } = useStyles()
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const [content, setContent] = useState<Content []>([])
-
-  const [category, setCategory] = useLocalStorage<string>({
-    key: 'category',
-    defaultValue: props.types[0]?.name || 'releases',
-    getInitialValueInEffect: true
-  })
   const [sort, setSort] = useLocalStorage<'asc' | 'desc'>({
     key: 'sort',
     defaultValue: 'asc',
     getInitialValueInEffect: true
   })
 
-  const fetchRepository = async (): Promise<void> => {
-    await RepositoryClient.getContent(category)
-      .then(value => setContent(value.contents))
-  }
-
-  const [mounted, setMounted] = useState(false)
-  if (!mounted) {
-    setMounted(true)
-    fetchRepository().then(() => {})
-  }
-
-  useEffect(() => {
-    fetchRepository().then(() => {})
-  }, [category, window.location.pathname])
+  const [category, setCategory] = useLocalStorage<string>({
+    key: 'category',
+    getInitialValueInEffect: true
+  })
 
   const [specialEndings] = useLocalStorage<boolean>({
     key: 'specialEndings',
@@ -116,7 +99,7 @@ function Render(props: { types: RepositoryList [], search: string }): JSX.Elemen
     return specialEndings ? !isSpecialEnding(value) : true
   }
 
-  return <Paper p={"xl"} shadow={"lg"} radius={"lg"}>
+  return <Paper p={"lg"} shadow={"lg"} radius={"lg"}>
 
     <Group position={"apart"}>
       <Group spacing={0}>
@@ -137,7 +120,7 @@ function Render(props: { types: RepositoryList [], search: string }): JSX.Elemen
           onChange={value => {
             setCategory(value || 'releases')
             if (value !== category)
-              navigate('/')
+              props.changePath(".")
           }}
           variant={"filled"}
           data={
@@ -152,55 +135,80 @@ function Render(props: { types: RepositoryList [], search: string }): JSX.Elemen
     <Space h={"md"} />
     <ScrollArea.Autosize maxHeight={500} mx={"auto"} type={"scroll"}>
       {
-        content.length === 0 || props.search.length > 0 && content.filter(value => filter(value.name)).length === 0 ?
+        props.repositoryContent?.contents.length === 0 ||
+        props.search.length > 0 &&
+        props.repositoryContent?.contents.filter(value => filter(value.name)).length === 0 ?
           <Text color={"dimmed"} className={classes.text} align={"center"}>{ t('list.empty') }</Text>
         :
-        content
-          .sort((a, b) =>
-            !a.isFile ? sort === 'asc' ?
-              a.name.localeCompare(b.name) :
-              b.name.localeCompare(a.name) : -1)
-          .filter(value => filter(value.name))
-          .map((value: Content, index: number) => {
-          return <Box key={index} className={classes.element} onClick={() => {
-            if (!value.isFile)
-              navigate(value.name, { relative: 'path', replace: false })
-          }}>
-            <Group position={"apart"}>
-              <Text className={classes.text}>{ value.name }</Text>
-              <Group spacing={0}>
-                { value.isFile ?
-                  <>
-                    <Badge size={"md"} radius={"sm"} variant={"filled"} color={"w_secondary"} mr={10}>{ value.size.toLocaleString() }B</Badge>
-                    <ThemeIcon variant={"light"} color={"w_secondary"} className={classes.textIcon} onClick={() => alert('Soon :)')}>
-                      <FiDownload />
-                    </ThemeIcon>
-                    <ThemeIcon variant={"light"} color={"w_secondary"} className={classes.textIcon} onClick={() => alert('Soon :)')}>
-                      <FiEye />
-                    </ThemeIcon>
-                  </> : <></>
-                }
-                <ThemeIcon variant={"light"} color={"w_secondary"} className={classes.textIcon}>
-                  { value.isFile ? <FiFile /> : <FiFolder /> }
-                </ThemeIcon>
+          <>
+          {
+            props.path.length > 0 && <Box className={classes.element} onClick={() => props.changePath("..")}>
+              <Group position={"apart"}>
+                <Text className={classes.text}>..</Text>
+                <Group spacing={0}>
+                  <ThemeIcon variant={"light"} color={"w_secondary"} className={classes.textIcon}>
+                    <FiFolder />
+                  </ThemeIcon>
+                </Group>
               </Group>
-            </Group>
-          </Box>
-        })
+            </Box>
+          }
+          {
+            props.repositoryContent?.contents
+              .sort((a, b) =>
+                !a.isFile ? sort === 'asc' ?
+                  a.name.localeCompare(b.name) :
+                  b.name.localeCompare(a.name) : -1)
+              .filter(value => filter(value.name))
+              .map((value: Content, index: number) => {
+                return <Box key={index} className={classes.element} onClick={() => {
+                  if (!value.isFile)
+                    props.changePath(value.name)
+                }}>
+                  <Group position={"apart"}>
+                    <Text className={classes.text}>{ value.name }</Text>
+                    <Group spacing={0}>
+                      { value.isFile ?
+                        <>
+                          <Badge size={"md"} radius={"sm"} variant={"filled"} color={"w_secondary"} mr={10}>{ value.size.toLocaleString() }B</Badge>
+                          <ThemeIcon variant={"light"} color={"w_secondary"} className={classes.textIcon} onClick={() => alert('Soon :)')}>
+                            <FiDownload />
+                          </ThemeIcon>
+                          <ThemeIcon variant={"light"} color={"w_secondary"} className={classes.textIcon} onClick={() => alert('Soon :)')}>
+                            <FiEye />
+                          </ThemeIcon>
+                        </> : <></>
+                      }
+                      <ThemeIcon variant={"light"} color={"w_secondary"} className={classes.textIcon}>
+                        { value.isFile ? <FiFile /> : <FiFolder /> }
+                      </ThemeIcon>
+                    </Group>
+                  </Group>
+                </Box>
+              })
+          }
+
+          </>
       }
     </ScrollArea.Autosize>
   </Paper>
 }
 
 interface Collection {
+  repositoryContent: RepositoryContent | undefined
   types: RepositoryList []
   search: string
+  path: string []
+  changePath: Function
 }
 
 export default class CollectionComponent extends Component<Collection, any> {
 
   render(): ReactNode {
     return <Render
+      changePath={this.props.changePath}
+      path={this.props.path}
+      repositoryContent={this.props.repositoryContent}
       types={this.props.types}
       search={this.props.search} />
   }
