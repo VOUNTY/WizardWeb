@@ -87,7 +87,8 @@ function RenderTab(props: { repositoryContent: RepositoryContent | undefined, na
   const { t } = useTranslation()
 
   const [category] = useLocalStorage<string>({
-    key: 'category'
+    key: 'category',
+    defaultValue: 'releases'
   })
 
   let code: string = ``
