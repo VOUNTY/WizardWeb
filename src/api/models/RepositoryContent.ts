@@ -39,11 +39,13 @@ export class Dependency {
 export class Content {
 
   name: string
+  folder: string
   isFile: boolean
   size: number
 
-  constructor(name: string, isFile: boolean, size: number) {
+  constructor(name: string, folder: string, isFile: boolean, size: number) {
     this.name = name;
+    this.folder = folder;
     this.isFile = isFile;
     this.size = size;
   }

@@ -1,8 +1,8 @@
 import { RestClient } from '../RestClient';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 
 import RepositoryList from '../models/RepositoryList';
-import RepositoryContent from '../models/RepositoryContent';
+import RepositoryContent, { Content } from '../models/RepositoryContent';
 
 export class RepositoryClient extends RestClient {
 
@@ -14,6 +14,10 @@ export class RepositoryClient extends RestClient {
   async getContent(repository: string, path: string []): Promise<RepositoryContent> {
     const { data: data } = await axios.get(`/s/${repository}/${this.formatPath(path)}`, this.config())
     return data
+  }
+
+  async getFileContent(repository: string, content: Content): Promise<AxiosResponse> {
+    return await axios.get(`/v/${repository}/${content.folder}/${content.name}`, this.config())
   }
 
   formatPath(paths: string []): string {

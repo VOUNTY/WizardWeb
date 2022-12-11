@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import ReactDOM, { Root } from 'react-dom/client';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import useMetaTags from 'react-metatags-hook';
 
 import './assets/index.scss';
@@ -93,13 +92,7 @@ function Render(): JSX.Element {
 
         <NotificationsProvider>
           <ModalsProvider>
-
-            <BrowserRouter>
-              <Routes>
-                <Route path={"*"} element={<HomeDefaultView />} />
-              </Routes>
-            </BrowserRouter>
-
+            <HomeDefaultView />
           </ModalsProvider>
         </NotificationsProvider>
 
