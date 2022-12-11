@@ -8,17 +8,19 @@ i18n.use(Backend)
 i18n.use(LanguageDetector)
 i18n.use(initReactI18next)
 
+export const availableLanguages: any [] = [
+  { value: 'de-DE', label: 'Deutsch' },
+  { value: 'en-US', label: 'English (United States)' },
+  { value: 'fr-FR', label: 'Français' },
+]
+
 i18n.init({
-  fallbackLng: 'en_US',
+  lng: 'en-US',
+  fallbackLng: 'en-US',
+  supportedLngs: availableLanguages.map(value => value.value),
   interpolation: {
     escapeValue: false,
   }
 }).then(() => {})
-
-export const availableLanguages: any [] = [
-  { value: 'de_DE', label: 'Deutsch' },
-  { value: 'en_US', label: 'English (United States)' },
-  { value: 'fr_FR', label: 'Français' },
-]
 
 export default i18n

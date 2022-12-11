@@ -38,6 +38,7 @@ const useStyles = createStyles(() => {
       position: 'fixed',
       bottom: 15,
       left: 15,
+      zIndex: 999,
     },
     input: {
       cursor: 'pointer',

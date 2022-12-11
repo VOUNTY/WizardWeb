@@ -27,7 +27,6 @@ function Render(): JSX.Element {
   const [category] = useLocalStorage<string>({
     key: 'category',
     defaultValue: types[0]?.name || 'releases',
-    getInitialValueInEffect: true
   })
 
   const loadRepositories = async (): Promise<void> =>

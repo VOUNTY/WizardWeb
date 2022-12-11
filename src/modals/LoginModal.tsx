@@ -37,6 +37,7 @@ const useStyles = createStyles(() => {
       position: 'fixed',
       bottom: 15,
       right: 15,
+      zIndex: 999,
     },
     form: {
       fontFamily: `'Dosis', sans-serif`,

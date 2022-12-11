@@ -73,18 +73,16 @@ function Render(props: { repositoryContent: RepositoryContent | undefined, types
   const [sort, setSort] = useLocalStorage<'asc' | 'desc'>({
     key: 'sort',
     defaultValue: 'asc',
-    getInitialValueInEffect: true
   })
 
   const [category, setCategory] = useLocalStorage<string>({
     key: 'category',
-    getInitialValueInEffect: true
+    defaultValue: props.types[0]?.name || 'releases',
   })
 
   const [specialEndings] = useLocalStorage<boolean>({
     key: 'specialEndings',
     defaultValue: true,
-    getInitialValueInEffect: true
   })
 
   const isSpecialEnding = (value: string): boolean => {
@@ -189,7 +187,7 @@ function Render(props: { repositoryContent: RepositoryContent | undefined, types
               {
                 props.repositoryContent?.contents
                   .sort((a, b) =>
-                    a.isFile ? (sort === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)) : 0)
+                    a.isFile ? (sort === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)) : 1)
                   .filter(value => filter(value.name))
                   .map((value: Content, index: number) => {
                     return <Box key={index} className={classes.element} onClick={() => {
