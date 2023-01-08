@@ -72,14 +72,14 @@ function Render(props: { open: boolean, onClose: Function, onOpen: Function, con
   </>
 }
 
-interface Login {
+interface File {
   open: boolean
   onOpen: Function
   onClose: Function
   content: string
 }
 
-export default class FileModal extends Component<Login, any> {
+export default class FileModal extends Component<File, any> {
 
   render(): ReactNode {
     return <Render

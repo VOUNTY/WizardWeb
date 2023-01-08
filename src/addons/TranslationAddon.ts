@@ -12,6 +12,8 @@ export const availableLanguages: any [] = [
   { value: 'de-DE', label: 'Deutsch' },
   { value: 'en-US', label: 'English (United States)' },
   { value: 'fr-FR', label: 'Français' },
+  { value: 'ru-RU', label: 'Россия' },
+  { value: 'it-IT', label: 'Italia' },
 ]
 
 i18n.init({

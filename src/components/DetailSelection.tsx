@@ -43,6 +43,9 @@ function Render(props: { repositoryContent: RepositoryContent | undefined }): JS
     { name: 'Gradle Kotlin', tabKey: 'gradle_kotlin', language: 'ocaml' },
     { name: 'SBT', tabKey: 'sbt', language: 'ocaml' },
     { name: 'Leiningen', tabKey: 'leiningen', language: 'ocaml' },
+    { name: 'BuildR', tabKey: 'buildr', language: 'ocaml' },
+    { name: 'Grape', tabKey: 'grape', language: 'ocaml' },
+    { name: 'Ivy', tabKey: 'ivy', language: 'ocaml' },
   ])
 
   return <Paper p={"lg"} shadow={"lg"} radius={"lg"}>
@@ -111,6 +114,18 @@ function RenderTab(props: { repositoryContent: RepositoryContent | undefined, na
     }
     case 'leiningen': {
       code = RenderLeiningen(props.repositoryContent, category || '{unknown}')
+      break
+    }
+    case 'buildr': {
+      code = RenderBuildR(props.repositoryContent, category || '{unknown}')
+      break
+    }
+    case 'grape': {
+      code = RenderGrape(props.repositoryContent, category || '{unknown}')
+      break
+    }
+    case 'ivy': {
+      code = RenderIvy(props.repositoryContent, category || '{unknown}')
       break
     }
   }
@@ -187,6 +202,30 @@ function RenderSBT(repositoryContent: RepositoryContent | undefined, category: s
 function RenderLeiningen(repositoryContent: RepositoryContent | undefined, category: string): string {
   const repository: string = `:repositories [["$id" "$protocol$host$id"]]`
   const dependency: string = `[$groupId/$artifactId "$version"]`
+
+  const content: string = repositoryContent?.dependency ? dependency : repository
+  return format(repositoryContent, content, category)
+}
+
+function RenderIvy(repositoryContent: RepositoryContent | undefined, category: string): string {
+  const repository: string = `<ibiblio name="$name" root="$protocol$host$id" m2compatible="true"/>`
+  const dependency: string = `<dependency org="$groupId" name="$artifactId" rev="$version"/>;`
+
+  const content: string = repositoryContent?.dependency ? dependency : repository
+  return format(repositoryContent, content, category)
+}
+
+function RenderGrape(repositoryContent: RepositoryContent | undefined, category: string): string {
+  const repository: string = `@GrabResolver(name='$name', root='$protocol$host$id')`
+  const dependency: string = `@Grab(group='$groupId', module='$artifactId', version='$version')`
+
+  const content: string = repositoryContent?.dependency ? dependency : repository
+  return format(repositoryContent, content, category)
+}
+
+function RenderBuildR(repositoryContent: RepositoryContent | undefined, category: string): string {
+  const repository: string = `repositories.remote << '$protocol$host$id'`
+  const dependency: string = `'$groupId:$artifactId:jar:$version'`
 
   const content: string = repositoryContent?.dependency ? dependency : repository
   return format(repositoryContent, content, category)

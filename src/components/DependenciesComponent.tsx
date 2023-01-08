@@ -12,11 +12,13 @@ import {
   ThemeIcon,
   Title,
 } from '@mantine/core';
-import { SiApachemaven } from 'react-icons/all';
+import { FiCheck, FiCopy } from 'react-icons/all';
 import { useTranslation } from 'react-i18next';
 import { MdLibraryBooks } from 'react-icons/md';
 
 import RepositoryContent, { Dependency } from '../api/models/RepositoryContent';
+import { useClipboard, useLocalStorage } from "@mantine/hooks";
+import { showNotification } from "@mantine/notifications";
 
 const useStyles = createStyles((theme: MantineTheme) => {
   return {
@@ -57,6 +59,67 @@ const useStyles = createStyles((theme: MantineTheme) => {
 function Render(props: { repositoryContent: RepositoryContent | undefined }): JSX.Element {
   const { classes } = useStyles()
   const { t } = useTranslation()
+  const clipboard = useClipboard()
+
+  const [storageTab] = useLocalStorage<string | null>({
+    key: 'tab',
+    defaultValue: 'maven',
+    getInitialValueInEffect: true
+  })
+
+  const copyDependency = (dependency: Dependency): void => {
+    let codeToCopy: string = ``
+    switch (storageTab) {
+      case 'maven': {
+        codeToCopy = `<dependency>
+  <groupId>$groupId</groupId>
+  <artifactId>$artifactId</artifactId>
+  <version>$version</version>
+</dependency>`
+        break
+      }
+      case 'gradle_groovy': {
+        codeToCopy = `implementation "$groupId:$artifactId:$version"`
+        break
+      }
+      case 'gradle_kotlin': {
+        codeToCopy = `implementation("$groupId:$artifactId:$version")`
+        break
+      }
+      case 'sbt': {
+        codeToCopy = `libraryDependencies += "$groupId" % "$artifactId" % "$version"`
+        break
+      }
+      case 'leiningen': {
+        codeToCopy = `[$groupId/$artifactId "$version"]`
+        break
+      }
+      case 'buildr': {
+        codeToCopy = `'$groupId:$artifactId:jar:$version'`
+        break
+      }
+      case 'grape': {
+        codeToCopy = `@Grab(group='$groupId', module='$artifactId', version='$version')`
+        break
+      }
+      case 'ivy': {
+        codeToCopy = `<dependency org="$groupId" name="$artifactId" rev="$version"/>;`
+        break
+      }
+    }
+    if (codeToCopy.length > 0) {
+      clipboard.copy(codeToCopy
+          .replaceAll('$groupId', dependency.groupId)
+          .replaceAll('$artifactId', dependency.artifactId)
+          .replaceAll('$version', dependency.version)
+      )
+      showNotification({
+        icon: <FiCheck />,
+        title: t('notifications.usedDependency.title'),
+        message: t('notifications.usedDependency.message'),
+      })
+    }
+  }
 
   return <Paper p={"lg"} shadow={"lg"} radius={"lg"}>
     <Group position={"apart"}>
@@ -79,10 +142,8 @@ function Render(props: { repositoryContent: RepositoryContent | undefined }): JS
               <Text className={classes.text}>{ `${value.groupId}:${value.artifactId}` }</Text>
               <Group spacing={0}>
                 <Badge size={"md"} radius={"sm"} variant={"filled"} color={"w_secondary"} mr={10}>v{ value.version }</Badge>
-                <ThemeIcon variant={"light"} color={"w_secondary"} className={classes.textIcon} onClick={() => {
-                  window.open(`https://central.sonatype.dev/namespace/${value.groupId}`, '_blank')
-                }}>
-                  <SiApachemaven className={classes.icon} />
+                <ThemeIcon variant={"light"} color={"w_secondary"} className={classes.textIcon} onClick={() => copyDependency(value)}>
+                  <FiCopy className={classes.icon} />
                 </ThemeIcon>
               </Group>
             </Group>
